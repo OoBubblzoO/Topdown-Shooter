@@ -8,8 +8,14 @@ public class BulletScript : MonoBehaviour
     // when bullet enters trigger collider
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // what it hit
-        Debug.Log("Bullet hit:" + collision.gameObject.name);
+        if (collision.CompareTag("Enemy"))
+        {
+            EnemyScript enemy = collision.GetComponent<EnemyScript>(); // access enemy script
+            if (enemy != null)
+            {
+                enemy.TakeDamage(1);
+            }
+        }
 
         //remove game object
         Destroy(gameObject);
