@@ -4,8 +4,10 @@ public class EnemyScript : MonoBehaviour
 {
     public Transform player; // reference to player
     public float speed = 2f;
-
     public int health = 3;
+
+    public delegate void EnemyDeathHandler(GameObject enemy);
+    public event EnemyDeathHandler OnEnemyDeath; // custom event
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -28,12 +30,9 @@ public class EnemyScript : MonoBehaviour
         }
     }
 
-    // Reduce health when called, checks health and destroys if at 0
     public void TakeDamage(int damage)
     {
         health -= damage;
-        Debug.Log("ENEMY TOOK DAMAGE: CURRENT HEALTH" + health);
-
         if (health <= 0)
         {
             Die();
@@ -42,6 +41,10 @@ public class EnemyScript : MonoBehaviour
 
     void Die()
     {
+        Debug.Log("Enemy Died");
+
+        // Trigger Event | notifies listener in spawner
+        OnEnemyDeath.Invoke(gameObject);
         // Destroy enemy at 0 health
         Destroy(gameObject);
     }
