@@ -89,7 +89,12 @@ public class PlayerMovement : MonoBehaviour
     void Die()
     {
         Debug.Log("Player has DIED!");
-        Destroy(gameObject);
+
+        // disable controls
+        gameObject.SetActive(false);
+
+        // Grabs GameOver from GameManager
+        GameManager.Instance.GameOver();
     }
 
 }
