@@ -12,6 +12,8 @@ public class PlayerMovement : MonoBehaviour
     public Transform firePoint; // point where bullets fired
     public float bulletSpeed = 10f; // bullet speed
 
+    public int health = 5;
+
 
     void Start()
     {
@@ -72,4 +74,22 @@ public class PlayerMovement : MonoBehaviour
 
         Debug.Log("Bullet Fired");
     }
+
+    public void TakeDamage(int damage) // reduce halth and check for current health
+    {
+        health -= damage;
+        Debug.Log("Player took damage! Current health:" + health);
+
+        if (health <= 0)
+        {
+            Die();
+        }
+    }
+
+    void Die()
+    {
+        Debug.Log("Player has DIED!");
+        Destroy(gameObject);
+    }
+
 }

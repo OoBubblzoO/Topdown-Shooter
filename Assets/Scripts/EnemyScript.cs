@@ -45,4 +45,17 @@ public class EnemyScript : MonoBehaviour
         // Destroy enemy at 0 health
         Destroy(gameObject);
     }
+
+    private void OnTriggerEnter2D(Collider2D collision)
+    {
+        if (collision.CompareTag("Player"))
+        {
+            // Script | var name | collider2d | check object
+            PlayerMovement player = collision.GetComponent<PlayerMovement>();
+            if (player != null)
+            {
+                player.TakeDamage(1);
+            }
+        }
+    }
 }
