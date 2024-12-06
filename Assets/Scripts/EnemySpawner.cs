@@ -6,17 +6,20 @@ using UnityEngine.UI;
 public class EnemySpawner : MonoBehaviour
 {
 
-    public GameObject enemyPrefab; // Reference to enemy Prefab
+    public GameObject[] enemyPrefabs; // Reference to enemy Prefab
     public Transform[] spawnPoints; // array of spawn locations
-    public float timeBetweenWaves = 5f; // break for player
 
+    public float minSpawnInterval = 0.5f;
+    public float maxSpawnInterval = 2f;
 
     private int waveNumber = 1; // Current wave number
-    public int enemiesPerWave = 5; // enemeies
+    public int enemiesPerWave = 20; // enemeies
+    private int enemiesSpawned;
     private List<GameObject> activeEnemies = new List<GameObject>();
 
 
     private bool isSpawning = false; // don't allow overlap
+    private bool isNextWaveStarting = false;
 
     public TMPro.TextMeshProUGUI waveText; // inspector
 
@@ -24,51 +27,60 @@ public class EnemySpawner : MonoBehaviour
     void Start()
     {
         // start wave
-        SpawnWave();
+        StartWave();
     }
 
-    void SpawnWave()
+    private void StartWave()
     {
-        waveText.text = "Wave " + waveNumber;
-        Debug.Log("Wave " + waveNumber + " starting!");
-
-        // spawn enemies
-        for (int i = 0; i < enemiesPerWave; i++)
+        if (waveText != null)
         {
-            SpawnEnemy();
+            waveText.text = "Wave: " + waveNumber;
         }
 
-        // difficulty increase during waves
-        enemiesPerWave += 2;
-        waveNumber++;
+        enemiesSpawned = 0;
+        StartCoroutine(SpawnEnemy());
     }
-
-
-    void SpawnEnemy()
+    private IEnumerator SpawnEnemy()
     {
-        // choose random spawn Point
-        int randomIndex = Random.Range(0, spawnPoints.Length);
-        Transform spawnPoint = spawnPoints[randomIndex];
+        isSpawning = true;
 
-        GameObject newEnemy = Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
-
-        // add enemy to activeEnemies list
-        activeEnemies.Add(newEnemy);
-
-        // subscribe to enemy death event
-        EnemyScript enemyScript = newEnemy.GetComponent<EnemyScript>();
-        if (enemyScript != null)
+        while (enemiesSpawned < enemiesPerWave)
         {
-            enemyScript.OnEnemyDeath += HandleEnemyDeath;
+
+            // choose random spawn Point
+            GameObject enemyPrefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
+            Transform spawnPoint = spawnPoints[Random.Range(0, spawnPoints.Length)];
+
+            // Add enemy to list
+            GameObject newEnemy = Instantiate(enemyPrefab, spawnPoint.position, spawnPoint.rotation);
+            activeEnemies.Add(newEnemy);
+
+            // subscribe to enemy death event
+            EnemyScript enemyScript = newEnemy.GetComponent<EnemyScript>();
+            if (enemyScript != null)
+            {
+                enemyScript.OnEnemyDeath += HandleEnemyDeath;
+            }
+            
+            // increment spawn count and wait before spawning
+            enemiesSpawned++;
+            float spawnDelay = Random.Range(minSpawnInterval, maxSpawnInterval);
+            yield return new WaitForSeconds(spawnDelay);
         }
+
+        isSpawning = false;
     }
+    
+
+    
 
     private void HandleEnemyDeath(GameObject enemy)
     {
         activeEnemies.Remove(enemy);
-        Debug.Log("Enemy Destroyed! Remaining: " + activeEnemies);
+        Debug.Log("Enemy Destroyed! Remaining: " + activeEnemies.Count);
 
-        if (activeEnemies.Count == 0 && !isSpawning)
+        // check if all enemies are ded before starting next
+        if (activeEnemies.Count == 0 && !isSpawning && enemiesSpawned >= enemiesPerWave)
         {
             StartCoroutine(StartNextWave());
         }
@@ -77,11 +89,17 @@ public class EnemySpawner : MonoBehaviour
     // start next wave on delay (CoRoutine)
     private IEnumerator StartNextWave()
     {
-        isSpawning = true;
-        Debug.Log("Wave Complete! Next wave in " + timeBetweenWaves + " seconds...");
-        yield return new WaitForSeconds(timeBetweenWaves);
+        if (isNextWaveStarting) yield break;
 
-        SpawnWave();
-        isSpawning = false;
+        isNextWaveStarting = true;
+        
+        Debug.Log("Wave" + waveNumber + "COmplete! Next wave in 5 seconds...");
+        yield return new WaitForSeconds(5f);
+
+        waveNumber++;
+        enemiesPerWave += 5;
+
+        isNextWaveStarting = false;
+        StartWave();
     }
 }

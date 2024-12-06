@@ -9,6 +9,10 @@ public class EnemyScript : MonoBehaviour
     public delegate void EnemyDeathHandler(GameObject enemy);
     public event EnemyDeathHandler OnEnemyDeath; // custom event
 
+    public float damageCooldown = 1f; // time between damage
+    private float lastDamageTime; // tracks last time damage was done
+
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -49,15 +53,32 @@ public class EnemyScript : MonoBehaviour
         Destroy(gameObject);
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void OnCollisionStay2D(Collision2D collision)
     {
-        if (collision.CompareTag("Player"))
+        if (collision.gameObject.CompareTag("Player"))
+        {
+            if(Time.time >= lastDamageTime + damageCooldown)
+            {
+                PlayerMovement player = collision.gameObject.GetComponent<PlayerMovement>();
+                if (player != null)
+                {
+                    player.TakeDamage(1);
+                    lastDamageTime = Time.time;
+                }
+            }
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        if (collision.gameObject.CompareTag("Player"))
         {
             // Script | var name | collider2d | check object
-            PlayerMovement player = collision.GetComponent<PlayerMovement>();
+            PlayerMovement player = collision.gameObject.GetComponent<PlayerMovement>();
             if (player != null)
             {
                 player.TakeDamage(1);
+
             }
         }
     }
